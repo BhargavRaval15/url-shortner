@@ -17,10 +17,13 @@ const CreateUrl: React.FC = () => {
     if (isCreating) return;
 
     try {
+      // Convert the date string to ISO format with time
+      const formattedExpiresAt = expiresAt ? new Date(expiresAt).toISOString() : undefined;
+
       await dispatch(createShortUrl({
         originalUrl,
         customAlias: customAlias || undefined,
-        expiresAt: expiresAt || undefined,
+        expiresAt: formattedExpiresAt,
       })).unwrap();
 
       // Only clear form if successful
@@ -78,7 +81,7 @@ const CreateUrl: React.FC = () => {
             Expiration Date (optional)
           </label>
           <input
-            type="date"
+            type="datetime-local"
             name="expiresAt"
             value={expiresAt}
             onChange={(e) => setExpiresAt(e.target.value)}

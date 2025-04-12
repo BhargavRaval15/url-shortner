@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store';
 import { getUserUrls, setSearchQuery, setPage, getUrlAnalytics } from '../store/slices/urlSlice';
 import { toast } from 'react-hot-toast';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, parseISO, isAfter } from 'date-fns';
 import { Url } from '../store/slices/urlSlice';
 import { BACKEND_URL } from '../config';
 import { QRCodeSVG } from 'qrcode.react';
@@ -81,28 +81,35 @@ const UrlList: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="flex-1 max-w-md relative">
-          <input
-            type="text"
-            placeholder="Search URLs..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
-          />
-          {loading && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search URLs..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            />
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-          )}
+            {loading && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              </div>
+            )}
+          </div>
         </div>
         <button
           onClick={() => dispatch(getUserUrls({ page: pagination.currentPage, search: searchQuery, limit: 5 }))}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg
-            className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
+            className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -138,91 +145,121 @@ const UrlList: React.FC = () => {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {urls.map((url) => (
-          <div key={url._id} className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-200">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500 mb-1">Original URL</p>
-                  <p className="text-blue-600 break-all hover:text-blue-800 transition-colors duration-200">
-                    {url.originalUrl}
-                  </p>
-                </div>
-                
-                <div className="mb-4">
-                  <p className="text-sm text-gray-500 mb-1">Short URL</p>
-                  <div className="flex items-center gap-2">
-                    <p 
-                      className="text-green-600 break-all cursor-pointer hover:text-green-800 hover:underline transition-colors duration-200"
-                      onClick={() => openUrl(`${BACKEND_URL}/${url.shortCode}`)}
-                    >
-                      {BACKEND_URL}/{url.shortCode}
+          <div key={url._id} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100">
+            <div className="p-6">
+              <div className="flex flex-col md:flex-row md:items-start gap-6">
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-1">Original URL</p>
+                    <p className="text-blue-600 break-all hover:text-blue-800 transition-colors duration-200 font-medium">
+                      {url.originalUrl}
                     </p>
-                    <button
-                      onClick={() => copyToClipboard(`${BACKEND_URL}/${url.shortCode}`)}
-                      className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
-                    >
-                      Copy
-                    </button>
                   </div>
-                </div>
+                  
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 mb-1">Short URL</p>
+                    <div className="flex items-center gap-3">
+                      <p 
+                        className="text-green-600 break-all cursor-pointer hover:text-green-800 hover:underline transition-colors duration-200 font-medium"
+                        onClick={() => openUrl(`${BACKEND_URL}/${url.shortCode}`)}
+                      >
+                        {BACKEND_URL}/{url.shortCode}
+                      </p>
+                      <button
+                        onClick={() => copyToClipboard(`${BACKEND_URL}/${url.shortCode}`)}
+                        className="text-blue-500 hover:text-blue-700 transition-colors duration-200 flex items-center gap-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                        Copy
+                      </button>
+                    </div>
+                  </div>
 
-                <div className="flex gap-4 text-sm text-gray-500">
-                  <p className="bg-gray-100 px-2 py-1 rounded">Clicks: {url.clicks}</p>
-                  <p className="bg-gray-100 px-2 py-1 rounded">Created: {formatDate(url.createdAt)}</p>
-                  {url.expiresAt && (
-                    <p className="bg-gray-100 px-2 py-1 rounded">Expires: {formatDate(url.expiresAt)}</p>
-                  )}
-                </div>
+                  <div className="flex flex-wrap gap-3">
+                    <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                      Clicks: {url.clicks}
+                    </div>
+                    <div className="bg-gray-50 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                      Created: {formatDate(url.createdAt)}
+                    </div>
+                    {url.expiresAt && (
+                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        isAfter(new Date(), parseISO(url.expiresAt))
+                          ? 'bg-red-50 text-red-700'
+                          : 'bg-green-50 text-green-700'
+                      }`}>
+                        {isAfter(new Date(), parseISO(url.expiresAt))
+                          ? 'Expired'
+                          : `Expires ${formatDistanceToNow(parseISO(url.expiresAt), { addSuffix: true })}`}
+                      </div>
+                    )}
+                  </div>
 
-                <button
-                  onClick={() => handleAnalyticsClick(url._id)}
-                  className="mt-4 text-blue-600 hover:text-blue-800 flex items-center gap-2"
-                >
-                  <svg
-                    className={`w-4 h-4 transition-transform ${expandedUrlId === url._id ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  <button
+                    onClick={() => handleAnalyticsClick(url._id)}
+                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors duration-200 font-medium"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                  {expandedUrlId === url._id ? 'Hide Analytics' : 'Show Analytics'}
-                </button>
+                    <svg
+                      className={`w-5 h-5 transition-transform duration-300 ${expandedUrlId === url._id ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                    {expandedUrlId === url._id ? 'Hide Analytics' : 'Show Analytics'}
+                  </button>
+                </div>
+                <div className="flex flex-col items-center gap-4">
+                  <QRCodeSVG 
+                    value={`${BACKEND_URL}/${url.shortCode}`}
+                    size={120}
+                    level="H"
+                    includeMargin={true}
+                    className="rounded-lg shadow-sm"
+                  />
+                  <button
+                    onClick={() => openUrl(`${BACKEND_URL}/${url.shortCode}`)}
+                    className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Open URL
+                  </button>
+                </div>
               </div>
-              <div className="ml-4">
-                <QRCodeSVG 
-                  value={`${BACKEND_URL}/${url.shortCode}`}
-                  size={100}
-                  level="H"
-                  includeMargin={true}
-                />
-              </div>
-            </div>
 
-            {expandedUrlId === url._id && analyticsData[url._id] && (
-              <div className="mt-6 pt-6 border-t">
-                <UrlAnalytics analytics={analyticsData[url._id]} />
-              </div>
-            )}
+              {expandedUrlId === url._id && analyticsData[url._id] && (
+                <div className="mt-8 pt-6 border-t border-gray-100">
+                  <UrlAnalytics analytics={analyticsData[url._id]} />
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
       {pagination.totalPages > 1 && (
-        <div className="flex justify-center mt-6">
+        <div className="flex justify-center mt-8">
           <nav className="flex items-center gap-2">
             <button
               onClick={() => handlePageChange(pagination.currentPage - 1)}
               disabled={pagination.currentPage === 1}
-              className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
               Previous
             </button>
             
@@ -236,13 +273,13 @@ const UrlList: React.FC = () => {
                 if (index > 0 && array[index - 1] !== page - 1) {
                   return (
                     <React.Fragment key={`ellipsis-${page}`}>
-                      <span className="px-2">...</span>
+                      <span className="px-4 text-gray-500">...</span>
                       <button
                         onClick={() => handlePageChange(page)}
-                        className={`px-3 py-1 rounded-md ${
+                        className={`px-4 py-2 rounded-lg transition-all duration-200 ${
                           page === pagination.currentPage
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                            : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                         }`}
                       >
                         {page}
@@ -254,10 +291,10 @@ const UrlList: React.FC = () => {
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`px-3 py-1 rounded-md ${
+                    className={`px-4 py-2 rounded-lg transition-all duration-200 ${
                       page === pagination.currentPage
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                     }`}
                   >
                     {page}
@@ -268,9 +305,12 @@ const UrlList: React.FC = () => {
             <button
               onClick={() => handlePageChange(pagination.currentPage + 1)}
               disabled={pagination.currentPage === pagination.totalPages}
-              className="px-3 py-1 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               Next
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </nav>
         </div>

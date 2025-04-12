@@ -131,23 +131,99 @@ const UrlAnalytics: React.FC<UrlAnalyticsProps> = ({ analytics }) => {
 
   return (
     <div className="space-y-8">
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-xl font-semibold mb-4">Total Clicks: {totalClicks}</h3>
+      <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl shadow-sm">
+        <h3 className="text-2xl font-bold text-blue-900 mb-2">Total Clicks</h3>
+        <p className="text-4xl font-bold text-blue-700">{totalClicks}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <Line data={clicksData} options={chartOptions} />
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Clicks Over Time</h3>
+          <div className="h-64">
+            <Line 
+              data={clicksData} 
+              options={{
+                ...chartOptions,
+                plugins: {
+                  ...chartOptions.plugins,
+                  tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#1f2937',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    padding: 10,
+                    displayColors: false,
+                    callbacks: {
+                      label: (context) => `${context.parsed.y} clicks`
+                    }
+                  }
+                }
+              }} 
+            />
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Device Distribution</h3>
-          <Doughnut data={deviceData} options={doughnutOptions} />
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Device Distribution</h3>
+          <div className="h-64">
+            <Doughnut 
+              data={deviceData} 
+              options={{
+                ...doughnutOptions,
+                plugins: {
+                  ...doughnutOptions.plugins,
+                  tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#1f2937',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    padding: 10,
+                    callbacks: {
+                      label: (context) => {
+                        const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                        const value = context.parsed;
+                        const percentage = Math.round((value / total) * 100);
+                        return `${context.label}: ${value} (${percentage}%)`;
+                      }
+                    }
+                  }
+                }
+              }} 
+            />
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Browser Usage</h3>
-          <Doughnut data={browserData} options={doughnutOptions} />
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Browser Usage</h3>
+          <div className="h-64">
+            <Doughnut 
+              data={browserData} 
+              options={{
+                ...doughnutOptions,
+                plugins: {
+                  ...doughnutOptions.plugins,
+                  tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#1f2937',
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1,
+                    padding: 10,
+                    callbacks: {
+                      label: (context) => {
+                        const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                        const value = context.parsed;
+                        const percentage = Math.round((value / total) * 100);
+                        return `${context.label}: ${value} (${percentage}%)`;
+                      }
+                    }
+                  }
+                }
+              }} 
+            />
+          </div>
         </div>
       </div>
     </div>
