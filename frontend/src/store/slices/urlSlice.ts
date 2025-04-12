@@ -17,6 +17,13 @@ export interface UrlState {
   isCreating: boolean;
   isFetching: boolean;
   error: string | null;
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
+  searchQuery: string;
 }
 
 const initialState: UrlState = {
@@ -24,6 +31,13 @@ const initialState: UrlState = {
   isCreating: false,
   isFetching: false,
   error: null,
+  pagination: {
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 5
+  },
+  searchQuery: ''
 };
 
 interface CreateUrlPayload {
@@ -50,11 +64,11 @@ export const createShortUrl = createAsyncThunk<Url, CreateUrlPayload>(
   }
 );
 
-export const getUserUrls = createAsyncThunk<Url[]>(
+export const getUserUrls = createAsyncThunk<{ urls: Url[]; total: number; currentPage: number; totalPages: number }, { page?: number; search?: string; limit?: number }>(
   'urls/getAll',
-  async (_, { rejectWithValue, dispatch }) => {
+  async ({ page = 1, search = '', limit = 5 }, { rejectWithValue, dispatch }) => {
     try {
-      const response = await axiosInstance.get<Url[]>('/urls/user');
+      const response = await axiosInstance.get(`/urls/user?page=${page}&limit=${limit}&search=${search}`);
       return response.data;
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -92,6 +106,13 @@ const urlSlice = createSlice({
       state.urls = [];
       state.error = null;
     },
+    setSearchQuery: (state, action: PayloadAction<string>) => {
+      state.searchQuery = action.payload;
+      state.pagination.currentPage = 1;
+    },
+    setPage: (state, action: PayloadAction<number>) => {
+      state.pagination.currentPage = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -114,9 +135,15 @@ const urlSlice = createSlice({
         state.isFetching = true;
         state.error = null;
       })
-      .addCase(getUserUrls.fulfilled, (state, action: PayloadAction<Url[]>) => {
+      .addCase(getUserUrls.fulfilled, (state, action) => {
         state.isFetching = false;
-        state.urls = action.payload;
+        state.urls = action.payload.urls;
+        state.pagination = {
+          ...state.pagination,
+          currentPage: action.payload.currentPage,
+          totalPages: action.payload.totalPages,
+          totalItems: action.payload.total
+        };
       })
       .addCase(getUserUrls.rejected, (state, action) => {
         state.isFetching = false;
@@ -126,5 +153,5 @@ const urlSlice = createSlice({
   },
 });
 
-export const { clearError, clearUrls } = urlSlice.actions;
+export const { clearError, clearUrls, setSearchQuery, setPage } = urlSlice.actions;
 export default urlSlice.reducer; 

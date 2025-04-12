@@ -10,6 +10,9 @@ A full-stack URL shortener with analytics dashboard, built with React, Node.js, 
 - 📱 Responsive Design
 - 🚀 Real-time click tracking
 - 📈 Interactive charts and visualizations
+- 🔍 Advanced Search & Pagination
+- 📱 QR Code Generation
+- 📊 Detailed Analytics Charts
 
 ## Tech Stack
 
@@ -17,6 +20,32 @@ A full-stack URL shortener with analytics dashboard, built with React, Node.js, 
 - Backend: Node.js, Express
 - Database: MongoDB
 - Authentication: JWT
+
+## Features in Detail
+
+### URL Management
+
+- Create short URLs with custom aliases
+- Set expiration dates for URLs
+- Copy short URLs to clipboard
+- Generate QR codes for easy sharing
+- View and manage all your URLs in one place
+
+### Analytics Dashboard
+
+- Real-time click tracking
+- Interactive line chart showing clicks over time
+- Device distribution analysis with doughnut chart
+- Browser usage statistics with doughnut chart
+- Total click count and detailed metrics
+
+### Advanced Features
+
+- Search functionality for URLs
+- Pagination with 5 URLs per page
+- Smart pagination controls with Previous/Next buttons
+- Responsive design for all screen sizes
+- Real-time data updates
 
 ## Getting Started
 
@@ -31,7 +60,7 @@ A full-stack URL shortener with analytics dashboard, built with React, Node.js, 
 1. Clone the repository
 
 ```bash
-git clone [repository-url]
+git clone https://github.com/BhargavRaval15/url-shortner.git
 ```
 
 2. Install dependencies
@@ -78,19 +107,51 @@ npm start
 ├── frontend/           # React frontend application
 │   ├── src/
 │   │   ├── components/ # Reusable UI components
+│   │   │   ├── UrlList.tsx      # URL list with pagination and search
+│   │   │   ├── UrlAnalytics.tsx # Analytics charts and visualizations
+│   │   │   └── CreateUrl.tsx    # URL creation form
 │   │   ├── pages/      # Page components
 │   │   ├── store/      # Redux store and slices
 │   │   └── utils/      # Utility functions
 │   └── public/         # Static assets
 │
-└── backend/            # Node.js backend application
-    ├── src/
-    │   ├── controllers/ # Route controllers
-    │   ├── models/      # Database models
-    │   ├── routes/      # API routes
-    │   └── middleware/  # Custom middleware
-    └── config/          # Configuration files
+├── backend/            # Node.js backend application
+│   ├── src/
+│   │   ├── controllers/ # Route controllers
+│   │   ├── models/      # Database models
+│   │   ├── routes/      # API routes
+│   │   └── middleware/  # Custom middleware
+│   └── .env            # Environment variables
+│
+└── README.md           # Project documentation
 ```
+
+## Analytics Features
+
+### Clicks Over Time
+
+- Interactive line chart
+- Daily click tracking
+- Custom date formatting
+- Responsive design
+
+### Device Distribution
+
+- Doughnut chart visualization
+- Percentage-based distribution
+- Color-coded segments
+- Interactive legend
+
+### Browser Usage
+
+- Doughnut chart visualization
+- Browser type distribution
+- Percentage calculations
+- Interactive tooltips
+
+## Contributing
+
+Feel free to submit issues and enhancement requests!
 
 ## API Documentation
 

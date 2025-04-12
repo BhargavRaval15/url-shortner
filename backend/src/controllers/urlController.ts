@@ -79,9 +79,32 @@ export const redirectToUrl = async (req: AuthRequest, res: Response) => {
 
 export const getUserUrls = async (req: AuthRequest, res: Response) => {
     try {
-        const urls = await Url.find({ userId: req.user._id })
-            .sort({ createdAt: -1 });
-        res.json(urls);
+        const { page = 1, limit = 5, search = '' } = req.query;
+        const skip = (Number(page) - 1) * Number(limit);
+
+        const query: any = { userId: req.user._id };
+        
+        if (search) {
+            query.$or = [
+                { originalUrl: { $regex: search, $options: 'i' } },
+                { shortCode: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        const [urls, total] = await Promise.all([
+            Url.find(query)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(Number(limit)),
+            Url.countDocuments(query)
+        ]);
+
+        res.json({
+            urls,
+            total,
+            currentPage: Number(page),
+            totalPages: Math.ceil(total / Number(limit))
+        });
     } catch (error) {
         res.status(500).json({ error: 'Server error' });
     }
