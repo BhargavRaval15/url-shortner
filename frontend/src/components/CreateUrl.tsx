@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useAppDispatch } from '../store';
-import { createShortUrl } from '../store/slices/urlSlice';
-import { RootState } from '../store';
+import { createUrl } from '../utils/urlApi';
 import { BACKEND_URL } from '../config';
 
-const CreateUrl: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const { isCreating } = useSelector((state: RootState) => state.urls);
+interface CreateUrlProps {
+  onUrlCreated?: () => void;
+}
+
+const CreateUrl: React.FC<CreateUrlProps> = ({ onUrlCreated }) => {
+  const [isCreating, setIsCreating] = useState(false);
   const [originalUrl, setOriginalUrl] = useState('');
   const [customAlias, setCustomAlias] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
@@ -16,23 +16,30 @@ const CreateUrl: React.FC = () => {
     e.preventDefault();
     if (isCreating) return;
 
+    setIsCreating(true);
     try {
       // Convert the date string to ISO format with time
       const formattedExpiresAt = expiresAt ? new Date(expiresAt).toISOString() : undefined;
 
-      await dispatch(createShortUrl({
+      await createUrl({
         originalUrl,
         customAlias: customAlias || undefined,
         expiresAt: formattedExpiresAt,
-      })).unwrap();
+      });
 
       // Only clear form if successful
       setOriginalUrl('');
       setCustomAlias('');
       setExpiresAt('');
+      
+      // Notify parent component about the created URL
+      if (onUrlCreated) {
+        onUrlCreated();
+      }
     } catch (error) {
-      // Error handling is done in the slice
       console.error('Failed to create URL:', error);
+    } finally {
+      setIsCreating(false);
     }
   };
 

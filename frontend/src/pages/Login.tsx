@@ -14,12 +14,12 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const result = await dispatch(login({ email, password })).unwrap();
-      if (result) {
+      const result = await dispatch(login({ email, password }));
+      if (result.meta.requestStatus === 'fulfilled') {
         navigate('/');
       }
     } catch (error) {
-      // Handle error
+      // Error is already handled in the thunk
     }
   };
 

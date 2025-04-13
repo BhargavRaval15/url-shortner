@@ -1,47 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../store';
-import { getUserUrls, setSearchQuery, setPage, getUrlAnalytics } from '../store/slices/urlSlice';
+import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { formatDistanceToNow, parseISO, isAfter } from 'date-fns';
 import { BACKEND_URL } from '../config';
 import { QRCodeSVG } from 'qrcode.react';
 import UrlAnalytics from './UrlAnalytics';
+import { Url, getUrlAnalytics } from '../utils/urlApi';
 
-const UrlList: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const { 
-    urls, 
-    isFetching: loading, 
-    error,
-    pagination,
-    searchQuery
-  } = useAppSelector((state) => state.urls);
-  const [hasInitiallyFetched, setHasInitiallyFetched] = useState(false);
+interface UrlListProps {
+  urls: Url[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+  };
+  loading: boolean;
+  error: string | null;
+  onPageChange: (page: number) => void;
+  onSearchChange: (search: string) => void;
+  onRefresh: () => void;
+}
+
+const UrlList: React.FC<UrlListProps> = ({ 
+  urls, 
+  pagination, 
+  loading, 
+  error,
+  onPageChange,
+  onSearchChange,
+  onRefresh
+}) => {
   const [searchInput, setSearchInput] = useState('');
   const [expandedUrlId, setExpandedUrlId] = useState<string | null>(null);
   const [analyticsData, setAnalyticsData] = useState<{ [key: string]: any }>({});
-
-  useEffect(() => {
-    if (!hasInitiallyFetched) {
-      setHasInitiallyFetched(true);
-      dispatch(getUserUrls({ page: 1, limit: 5 }));
-    }
-  }, [dispatch, hasInitiallyFetched]);
-
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (searchInput !== searchQuery) {
-        dispatch(setSearchQuery(searchInput));
-        dispatch(getUserUrls({ page: 1, search: searchInput, limit: 5 }));
-      }
-    }, 500);
-
-    return () => clearTimeout(debounceTimer);
-  }, [searchInput, dispatch]);
-
-  useEffect(() => {
-    dispatch(getUserUrls({ page: pagination.currentPage, search: searchQuery, limit: 5 }));
-  }, [pagination.currentPage, searchQuery, dispatch]);
 
   const handleAnalyticsClick = async (urlId: string) => {
     if (expandedUrlId === urlId) {
@@ -50,7 +41,7 @@ const UrlList: React.FC = () => {
     }
 
     try {
-      const response = await dispatch(getUrlAnalytics(urlId)).unwrap();
+      const response = await getUrlAnalytics(urlId);
       setAnalyticsData(prev => ({
         ...prev,
         [urlId]: response
@@ -74,8 +65,16 @@ const UrlList: React.FC = () => {
     return formatDistanceToNow(new Date(dateString), { addSuffix: true });
   };
 
-  const handlePageChange = (page: number) => {
-    dispatch(setPage(page));
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    
+    // Debounce search
+    const debounceTimer = setTimeout(() => {
+      onSearchChange(value);
+    }, 500);
+    
+    return () => clearTimeout(debounceTimer);
   };
 
   return (
@@ -87,7 +86,7 @@ const UrlList: React.FC = () => {
               type="text"
               placeholder="Search URLs..."
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={handleSearchInputChange}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             />
             <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
@@ -103,7 +102,7 @@ const UrlList: React.FC = () => {
           </div>
         </div>
         <button
-          onClick={() => dispatch(getUserUrls({ page: pagination.currentPage, search: searchQuery, limit: 5 }))}
+          onClick={onRefresh}
           disabled={loading}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -250,66 +249,34 @@ const UrlList: React.FC = () => {
 
       {pagination.totalPages > 1 && (
         <div className="flex justify-center mt-8">
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center space-x-2">
             <button
-              onClick={() => handlePageChange(pagination.currentPage - 1)}
-              disabled={pagination.currentPage === 1}
-              className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              onClick={() => onPageChange(pagination.currentPage - 1)}
+              disabled={pagination.currentPage === 1 || loading}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
               Previous
             </button>
-            
-            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-              .filter(page => {
-                return page === 1 || 
-                       page === pagination.totalPages || 
-                       (page >= pagination.currentPage - 1 && page <= pagination.currentPage + 1);
-              })
-              .map((page, index, array) => {
-                if (index > 0 && array[index - 1] !== page - 1) {
-                  return (
-                    <React.Fragment key={`ellipsis-${page}`}>
-                      <span className="px-4 text-gray-500">...</span>
-                      <button
-                        onClick={() => handlePageChange(page)}
-                        className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                          page === pagination.currentPage
-                            ? 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                            : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    </React.Fragment>
-                  );
-                }
-                return (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                      page === pagination.currentPage
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              })}
-            
+            {[...Array(pagination.totalPages)].map((_, index) => (
+              <button
+                key={index}
+                onClick={() => onPageChange(index + 1)}
+                disabled={loading}
+                className={`px-3 py-1 border rounded-md text-sm ${
+                  pagination.currentPage === index + 1
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
             <button
-              onClick={() => handlePageChange(pagination.currentPage + 1)}
-              disabled={pagination.currentPage === pagination.totalPages}
-              className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              onClick={() => onPageChange(pagination.currentPage + 1)}
+              disabled={pagination.currentPage === pagination.totalPages || loading}
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
             </button>
           </nav>
         </div>

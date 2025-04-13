@@ -1,17 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
-import urlReducer, { UrlState } from './slices/urlSlice';
-import authReducer, { AuthState } from './slices/authSlice';
+import authReducer from './slices/authSlice';
+import authSlice from './slices/authSlice';
 
 export interface RootState {
-  auth: AuthState;
-  urls: UrlState;
+  auth: ReturnType<typeof authSlice>;
 }
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    urls: urlReducer,
   },
 });
 
