@@ -1,21 +1,25 @@
 import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { RootState } from '../store';
+import { RootState, useAppDispatch } from '../store';
 import { login } from '../store/slices/authSlice';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { loading } = useSelector((state: RootState) => state.auth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await dispatch(login({ email, password }));
-    if (result) {
-      navigate('/');
+    try {
+      const result = await dispatch(login({ email, password })).unwrap();
+      if (result) {
+        navigate('/');
+      }
+    } catch (error) {
+      // Handle error
     }
   };
 

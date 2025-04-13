@@ -4,7 +4,7 @@ import { API_URL } from '../../config';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-interface AuthState {
+export interface AuthState {
   user: {
     id: string;
     email: string;

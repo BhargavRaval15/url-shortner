@@ -6,10 +6,10 @@ import UrlList from '../components/UrlList';
 
 const Dashboard = () => {
   const dispatch = useAppDispatch();
-  const { loading } = useAppSelector((state) => state.urls);
+  const { isFetching } = useAppSelector((state) => state.urls);
 
   useEffect(() => {
-    dispatch(getUserUrls());
+    dispatch(getUserUrls({ page: 1, limit: 5 }));
   }, [dispatch]);
 
   return (
@@ -21,7 +21,7 @@ const Dashboard = () => {
 
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-2xl font-bold mb-4">Your URLs</h2>
-        {loading ? (
+        {isFetching ? (
           <div className="text-center">Loading...</div>
         ) : (
           <UrlList />

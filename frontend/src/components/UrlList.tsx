@@ -3,7 +3,6 @@ import { useAppDispatch, useAppSelector } from '../store';
 import { getUserUrls, setSearchQuery, setPage, getUrlAnalytics } from '../store/slices/urlSlice';
 import { toast } from 'react-hot-toast';
 import { formatDistanceToNow, parseISO, isAfter } from 'date-fns';
-import { Url } from '../store/slices/urlSlice';
 import { BACKEND_URL } from '../config';
 import { QRCodeSVG } from 'qrcode.react';
 import UrlAnalytics from './UrlAnalytics';
